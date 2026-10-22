@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #050505;
+    --bg-secondary: #0A0A0C;
+    --accent-blue: #0050FF;
+    --accent-cyan: #00D6FF;
+    --katsura-orange: #FF5E00;
+  }
+
+  html, body {
+    background-color: #050505;
+    color: #ffffff;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    /* overflow-x: clip ensures elements don't cause horizontal page scrolling, without breaking CSS position: sticky */
+    overflow-x: clip;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Custom subtle dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e2230;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #0050ff88;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(10, 10, 14, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-pill {
+  background: rgba(15, 17, 23, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Tech Grid Background */
+.tech-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Gradient text */
+.text-gradient-cyan {
+  background: linear-gradient(180deg, #FFFFFF 30%, #8FE7FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-blue {
+  background: linear-gradient(135deg, #00D6FF 0%, #0050FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-orange {
+  background: linear-gradient(135deg, #FFA048 0%, #FF5E00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Glowing button border */
+.glow-button {
+  position: relative;
+  background: linear-gradient(135deg, #0050FF, #00D6FF);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glow-button:hover {
+  box-shadow: 0 0 25px rgba(0, 214, 255, 0.4), 0 0 50px rgba(0, 80, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Subtle pulse animation for telemetry */
+@keyframes hudPulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.3; }
+}
+.animate-hud-pulse {
+  animation: hudPulse 2.5s infinite ease-in-out;
+}
