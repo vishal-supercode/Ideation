@@ -4,11 +4,7 @@ import { ArrowDown } from 'lucide-react';
 
 export default function KatsuraIntro() {
   const stageRef = useRef(null);
-  const [introActive, setIntroActive] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    const savedScrollY = Number(sessionStorage.getItem('gtr-page-scroll-y') || 0);
-    return Math.max(window.scrollY, savedScrollY) < window.innerHeight * 1.8;
-  });
+  const [introActive, setIntroActive] = useState(true);
   const { scrollYProgress } = useScroll({
     target: stageRef,
     offset: ['start start', 'end start'],
@@ -25,20 +21,15 @@ export default function KatsuraIntro() {
   const promptY = useTransform(progress, [0, 0.16], ['0px', '24px']);
 
   useEffect(() => {
-    const saveScrollPosition = () => {
-      sessionStorage.setItem('gtr-page-scroll-y', String(window.scrollY));
-    };
     const updateIntroVisibility = () => {
       const stage = stageRef.current;
       if (stage) setIntroActive(window.scrollY < stage.offsetHeight);
-      saveScrollPosition();
     };
 
+    updateIntroVisibility();
     window.addEventListener('scroll', updateIntroVisibility, { passive: true });
-    window.addEventListener('pagehide', saveScrollPosition);
     return () => {
       window.removeEventListener('scroll', updateIntroVisibility);
-      window.removeEventListener('pagehide', saveScrollPosition);
     };
   }, []);
 

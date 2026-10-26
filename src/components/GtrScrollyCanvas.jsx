@@ -2,14 +2,12 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import {  
   Cpu, 
   Gauge, 
-  Activity, 
   Crosshair, 
-  ShieldCheck, 
-  CheckCircle2, 
+  ShieldCheck,  
 } from 'lucide-react';
 import { gtrAudio } from '../utils/audioEngine';
 
-const TOTAL_FRAMES = 240;
+const TOTAL_FRAMES = 239;
 const HERO_PROGRESS_AT_EXIT = 0.9;
 
 const CHAPTERS = [
