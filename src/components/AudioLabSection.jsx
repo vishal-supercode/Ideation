@@ -98,9 +98,6 @@ export default function AudioLabSection({ setSoundEnabled }) {
             The Sound of <br />
             <span className="text-gradient-orange">Pure Combustion.</span>
           </h2>
-          <p className="mt-4 text-sm sm:text-base text-white/60 leading-relaxed font-light">
-            Push the engine start button to hear the starter crank and 3.8L twin-turbo V6 catch fire, or hold the throttle to spool up the boost.
-          </p>
         </div>
 
         {/* Cockpit Gauge Cluster & Throttle Console */}

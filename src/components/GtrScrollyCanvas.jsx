@@ -375,13 +375,13 @@ export default function GtrScrollyCanvas() {
 
         {/* BEAT 2: ENGINEERING REVEAL (16% - 40% scroll) */}
         <div
-          className={`absolute left-4 sm:left-10 lg:left-16 top-1/2 -translate-y-1/2 max-w-sm sm:max-w-md lg:max-w-lg z-20 transition-all duration-700 pointer-events-none ${
+          className={`absolute left-4 sm:left-10 lg:left-16 top-1/3 -translate-y-1/2 max-w-sm sm:max-w-md lg:max-w-lg z-20 transition-all duration-700 pointer-events-none ${
             currentProgress > 0.16 && currentProgress <= 0.40
               ? 'opacity-100 translate-x-0'
               : 'opacity-0 -translate-x-12'
           }`}
         >
-          <div className="glass-panel p-5 sm:p-7 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
+          <div className="glass-panel p-4 sm:p-5 rounded-xl border border-white/10 shadow-2xl relative overflow-hidden max-w-xs">
             {/* Tech line indicator */}
             <div className="absolute top-0 left-0 w-1.5 h-full bg-linear-to-b from-[#00D6FF] via-[#0050FF] to-transparent" />
 
@@ -391,37 +391,9 @@ export default function GtrScrollyCanvas() {
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
-              Precision-engineered for speed.
+              Engineered for speed.
             </h2>
 
-            <div className="mt-3 space-y-2.5 text-xs sm:text-sm text-white/70 leading-relaxed font-light">
-              <p>
-                A rigid chassis, hand-assembled powertrain, and optimized aerodynamics deliver track-grade performance.
-              </p>
-              <p>
-                Every component is tuned for balance, power, and control-lap after lap.
-              </p>
-            </div>
-
-            {/* Technical Highlights */}
-            <div className="mt-5 pt-4 border-t border-white/10 grid grid-cols-2 gap-2.5 text-xs">
-              <div className="flex items-center gap-2 text-white/80">
-                <CheckCircle2 className="w-4 h-4 text-[#00D6FF] shrink-0" />
-                <span>Takumi Cleanroom</span>
-              </div>
-              <div className="flex items-center gap-2 text-white/80">
-                <CheckCircle2 className="w-4 h-4 text-[#00D6FF] shrink-0" />
-                <span>Cd 0.26 Drag Bias</span>
-              </div>
-              <div className="flex items-center gap-2 text-white/80">
-                <CheckCircle2 className="w-4 h-4 text-[#00D6FF] shrink-0" />
-                <span>Carbon Crossmember</span>
-              </div>
-              <div className="flex items-center gap-2 text-white/80">
-                <CheckCircle2 className="w-4 h-4 text-[#00D6FF] shrink-0" />
-                <span>Plasma Cylinder Bores</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -433,7 +405,7 @@ export default function GtrScrollyCanvas() {
               : 'opacity-0 translate-x-12'
           }`}
         >
-          <div className="glass-panel p-5 sm:p-7 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
+          <div className="glass-panel p-4 sm:p-5 rounded-xl border border-white/10 shadow-2xl relative overflow-hidden max-w-xs">
             {/* Tech line indicator */}
             <div className="absolute top-0 right-0 w-1.5 h-full bg-linear-to-b from-[#FF5E00] via-[#00D6FF] to-transparent" />
 
@@ -446,35 +418,6 @@ export default function GtrScrollyCanvas() {
               Twin-turbo power, redefined.
             </h2>
 
-            <div className="mt-4 space-y-3 text-xs sm:text-sm text-white/70 leading-relaxed font-light">
-              <div className="flex items-start gap-2.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#00D6FF] mt-1.5 shrink-0 shadow-[0_0_8px_#00D6FF]" />
-                <p>
-                  Twin turbochargers force air into every cylinder with relentless urgency.
-                </p>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#00D6FF] mt-1.5 shrink-0 shadow-[0_0_8px_#00D6FF]" />
-                <p>
-                  Real-time engine management adjusts to every throttle input and road condition.
-                </p>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#FF5E00] mt-1.5 shrink-0 shadow-[0_0_8px_#FF5E00]" />
-                <p>
-                  Your power stays pure-boost, torque, and response arrive instantly.
-                </p>
-              </div>
-            </div>
-
-            {/* Live Telemetry Card */}
-            <div className="mt-5 p-3 rounded-xl bg-black/50 border border-[#00D6FF]/20 flex items-center justify-between text-xs font-mono">
-              <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-[#00D6FF] animate-pulse" />
-                <span className="text-white/60">BOOST PRESSURE</span>
-              </div>
-              <span className="text-[#00D6FF] font-bold">15.2 PSI @ 6,800 RPM</span>
-            </div>
           </div>
         </div>
 
@@ -486,7 +429,7 @@ export default function GtrScrollyCanvas() {
               : 'opacity-0 -translate-x-12'
           }`}
         >
-          <div className="glass-panel p-5 sm:p-7 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
+          <div className="glass-panel p-4 sm:p-5 rounded-xl border border-white/10 shadow-2xl relative overflow-hidden max-w-xs">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-linear-to-b from-[#0050FF] to-[#00D6FF]" />
 
             <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-[#00D6FF] uppercase mb-2">
@@ -498,30 +441,6 @@ export default function GtrScrollyCanvas() {
               Immersive, lifelike control.
             </h2>
 
-            <div className="mt-3 space-y-2.5 text-xs sm:text-sm text-white/70 leading-relaxed font-light">
-              <p>
-                A high-performance drivetrain unlocks traction, balance, and feedback in every corner.
-              </p>
-              <p>
-                Intelligent all-wheel drive distributes torque in real time, so every apex feels alive.
-              </p>
-            </div>
-
-            {/* Drivetrain Specs */}
-            <div className="mt-5 pt-4 border-t border-white/10 space-y-2 text-xs">
-              <div className="flex justify-between text-white/70">
-                <span className="font-mono text-white/50">TORQUE SPLIT:</span>
-                <span className="font-semibold text-white">0:100 (Rear) to 50:50 (AWD)</span>
-              </div>
-              <div className="flex justify-between text-white/70">
-                <span className="font-mono text-white/50">TRANSAXLE:</span>
-                <span className="font-semibold text-white">GR6 Dual-Clutch 6-Speed</span>
-              </div>
-              <div className="flex justify-between text-white/70">
-                <span className="font-mono text-white/50">SUSPENSION:</span>
-                <span className="font-semibold text-white">Bilstein DampTronic Active Valving</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -546,10 +465,6 @@ export default function GtrScrollyCanvas() {
 
             <p className="mt-3 text-sm sm:text-lg font-light text-white/80 font-['Space_Grotesk']">
               GT-R. Designed for speed, crafted for control.
-            </p>
-
-            <p className="mt-1.5 text-xs text-white/50 max-w-sm mx-auto">
-              Engineered for racetracks, highways, and everything in between.
             </p>
           </div>
         </div>

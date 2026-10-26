@@ -73,7 +73,7 @@ export default function App() {
           setSoundEnabled={setSoundEnabled} 
         />
       </main>
-      <Footer/>
+      <Footer onNavigate={handleNavigate} />
     </div>
   );
 }

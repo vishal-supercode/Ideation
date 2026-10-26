@@ -39,8 +39,6 @@
 /* Glassmorphism helpers - Optimized for crisp text rendering during fast scroll */
 .glass-panel {
   background: rgba(10, 10, 14, 0.72);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   transform: translateZ(0);
   -webkit-font-smoothing: antialiased;
