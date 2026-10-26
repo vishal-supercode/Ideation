@@ -1,63 +1,25 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { 
-  ChevronDown, 
+import { useRef, useEffect, useState, useCallback } from 'react';
+import {  
   Cpu, 
   Gauge, 
   Activity, 
   Crosshair, 
-  ShieldCheck,
-  CheckCircle2,
-  Sparkles
+  ShieldCheck, 
+  CheckCircle2, 
 } from 'lucide-react';
+import { gtrAudio } from '../utils/audioEngine';
 
 const TOTAL_FRAMES = 240;
+const HERO_PROGRESS_AT_EXIT = 0.9;
 
 const CHAPTERS = [
   { id: 'hero', name: '01 Hero', progress: 0.05, label: 'Assembled' },
   { id: 'engineering', name: '02 Engineering', progress: 0.28, label: 'Dismantle' },
   { id: 'powertrain', name: '03 Powertrain', progress: 0.52, label: 'Twin-Turbo V6' },
   { id: 'drivetrain', name: '04 Drivetrain', progress: 0.74, label: 'ATTESA AWD' },
-  { id: 'finale', name: '05 Finale', progress: 0.95, label: 'Reassembly' },
+  { id: 'finale', name: '05 Finale', progress: 0.88, label: 'Reassembly' },
 ];
 
-const HOTSPOTS = [
-  {
-    id: 'engine',
-    title: 'VR38DETT 3.8L Twin-Turbo V6',
-    desc: 'Handcrafted by Master Takumi in a dust-free cleanroom. Plasma-sprayed bores with zero cylinder liners for reduced friction.',
-    x: 48,
-    y: 44,
-    showMinProgress: 0.32,
-    showMaxProgress: 0.72,
-  },
-  {
-    id: 'turbo',
-    title: 'Dual IHI Monoblock Turbochargers',
-    desc: 'Integrated exhaust manifolds and twin boost regulators producing instantaneous spool with 15.2 PSI maximum boost.',
-    x: 62,
-    y: 36,
-    showMinProgress: 0.38,
-    showMaxProgress: 0.70,
-  },
-  {
-    id: 'transaxle',
-    title: 'GR6 Dual-Clutch Rear Transaxle',
-    desc: 'World’s first independent rear transaxle all-wheel drive, maintaining a near-ideal 54:46 front-to-rear dynamic balance.',
-    x: 32,
-    y: 60,
-    showMinProgress: 0.58,
-    showMaxProgress: 0.85,
-  },
-  {
-    id: 'brakes',
-    title: 'Brembo Carbon-Composite Braking',
-    desc: '6-piston front monoblock calipers clamping 390mm cross-drilled floating two-piece floating rotors.',
-    x: 75,
-    y: 62,
-    showMinProgress: 0.60,
-    showMaxProgress: 0.85,
-  },
-];
 
 export default function GtrScrollyCanvas() {
   const containerRef = useRef(null);
@@ -75,7 +37,17 @@ export default function GtrScrollyCanvas() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentProgress, setCurrentProgress] = useState(0);
   const [activeChapter, setActiveChapter] = useState('hero');
-  const [activeHotspot, setActiveHotspot] = useState(null);
+  const [isEngineRunning, setIsEngineRunning] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+
+  // Subscribe to gtrAudio state
+  useEffect(() => {
+    const unsub = gtrAudio.subscribe((s) => {
+      setIsEngineRunning(s.isEngineRunning);
+      setIsStarting(s.isStarting);
+    });
+    return unsub;
+  }, []);
 
   // Helper to format frame path
   const getFrameUrl = (index) => {
@@ -144,22 +116,20 @@ export default function GtrScrollyCanvas() {
 
     if (!img) return; // Wait for initial frame
 
-    // Calculate aspect ratio fit (contain)
+    // Fill the canvas so the car frame reaches the hero section edges without inset gaps.
     const imgRatio = img.naturalWidth / img.naturalHeight;
     const canvasRatio = width / height;
 
     let drawW, drawH, drawX, drawY;
 
     if (canvasRatio > imgRatio) {
-      // Window is wider than 16:9
-      drawH = height * 0.94;
-      drawW = drawH * imgRatio;
+      drawW = width;
+      drawH = drawW / imgRatio;
       drawX = (width - drawW) / 2;
       drawY = (height - drawH) / 2;
     } else {
-      // Window is taller than 16:9
-      drawW = width * 0.96;
-      drawH = drawW / imgRatio;
+      drawH = height;
+      drawW = drawH * imgRatio;
       drawX = (width - drawW) / 2;
       drawY = (height - drawH) / 2;
     }
@@ -169,6 +139,14 @@ export default function GtrScrollyCanvas() {
     ctx.imageSmoothingQuality = 'high';
 
     ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+    // Completely mask and hide the "Veo" watermark in the bottom-right corner of the image
+    const patchX = drawX + drawW * (3700 / 3840);
+    const patchY = drawY + drawH * (2060 / 2160);
+    const patchW = drawW * (140 / 3840);
+    const patchH = drawH * (100 / 2160);
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(patchX, patchY, patchW, patchH);
 
     // Ultra-soft vignette border fade so edges melt 100% seamlessly into the page void
     const vignette = ctx.createRadialGradient(
@@ -254,10 +232,10 @@ export default function GtrScrollyCanvas() {
         currentFrameRef.current = (currentFrameRef.current + 0.8) % TOTAL_FRAMES;
         targetFrameRef.current = currentFrameRef.current;
       } else {
-        // Scroll LERP smoothing (Apple-like weighted inertia)
+        // Scroll LERP smoothing (tuned for Lenis physics inertia)
         const diff = targetFrameRef.current - currentFrameRef.current;
         if (Math.abs(diff) > 0.01) {
-          currentFrameRef.current += diff * 0.18;
+          currentFrameRef.current += diff * 0.22;
         } else {
           currentFrameRef.current = targetFrameRef.current;
         }
@@ -282,12 +260,15 @@ export default function GtrScrollyCanvas() {
       if (!container) return;
 
       const rect = container.getBoundingClientRect();
-      const scrollDist = container.offsetHeight - window.innerHeight;
-      if (scrollDist <= 0) return;
-
-      // When rect.top is 0 -> progress is 0
-      // When rect.top is -scrollDist -> progress is 1
-      const progress = Math.max(0, Math.min(1, -rect.top / scrollDist));
+      // Keep the hero animation on its opening frame while the intro curtain is active.
+      const intro = document.getElementById('katsura-intro');
+      const introScrollDistance = intro ? intro.offsetHeight : 0;
+      const pinnedScrollDist = container.offsetHeight - window.innerHeight - introScrollDistance;
+      if (pinnedScrollDist <= 0) return;
+      const scrollDist = pinnedScrollDist / HERO_PROGRESS_AT_EXIT;
+      const containerTop = rect.top + window.scrollY;
+      const heroScroll = Math.max(0, window.scrollY - containerTop - introScrollDistance);
+      const progress = Math.max(0, Math.min(1, heroScroll / scrollDist));
       setCurrentProgress(progress);
       targetFrameRef.current = progress * (TOTAL_FRAMES - 1);
 
@@ -304,16 +285,25 @@ export default function GtrScrollyCanvas() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Jump to chapter
+  // Jump to chapter with Lenis smooth scroll
   const scrollToChapter = (chapterProgress) => {
     const container = containerRef.current;
     if (!container) return;
-    const scrollDist = container.offsetHeight - window.innerHeight;
-    const targetScrollY = container.offsetTop + chapterProgress * scrollDist;
-    window.scrollTo({
-      top: targetScrollY,
-      behavior: 'smooth',
-    });
+    const intro = document.getElementById('katsura-intro');
+    const introScrollDistance = intro ? intro.offsetHeight : 0;
+    const pinnedScrollDist = container.offsetHeight - window.innerHeight - introScrollDistance;
+    const scrollDist = pinnedScrollDist / HERO_PROGRESS_AT_EXIT;
+    const containerTop = container.getBoundingClientRect().top + window.scrollY;
+    const targetProgress = Math.min(chapterProgress, HERO_PROGRESS_AT_EXIT);
+    const targetScrollY = containerTop + introScrollDistance + targetProgress * scrollDist;
+    if (window.lenis) {
+      window.lenis.scrollTo(targetScrollY, { duration: 1.4 });
+    } else {
+      window.scrollTo({
+        top: targetScrollY,
+        behavior: 'smooth',
+      });
+    }
   };
 
   return (
@@ -321,35 +311,33 @@ export default function GtrScrollyCanvas() {
       id="scrolly-top"
       ref={containerRef} 
       className="relative w-full bg-[#050505]"
-      style={{ minHeight: '480vh' }}
+      style={{ minHeight: '640vh' }}
     >
       {/* Sticky Canvas & Viewport Container - Always visible during scroll */}
       <div 
-        className="sticky top-0 left-0 w-full h-screen overflow-hidden flex items-center justify-center z-10"
-        style={{ position: 'sticky', top: 0, height: '100vh', width: '100%' }}
+        className="sticky top-0 left-0 w-full h-screen overflow-hidden flex items-center justify-center z-10 bg-[#050505]"
+        style={{
+          position: 'sticky',
+          top: 0,
+          height: '100vh',
+          width: '100%',
+          backgroundImage: "linear-gradient(rgba(5, 5, 5, 0.18), rgba(5, 5, 5, 0.3)), url('/Neon%20Night%20Drive%20to%20the%20City.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
       >
-        {/* The HTML5 Canvas */}
+        {/* The HTML5 Canvas with subtle engine chassis vibration (Pristine, no overlay over car) */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0"
+          className={`absolute inset-0 w-full h-full object-contain pointer-events-none z-0 transition-transform ${
+            isStarting 
+              ? 'engine-vibrate-startup' 
+              : (isEngineRunning ? 'engine-vibrate-idle' : '')
+          }`}
         />
 
         {/* Ambient Subtle Radial Gradient Background Layer */}
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,rgba(0,80,255,0.06),transparent_80%)] z-1" />
-
-        {/* Loading Progress Bar (Top) */}
-        {!isLoaded && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-1.5 rounded-full glass-panel border border-[#00D6FF]/30 text-xs font-mono text-white/80">
-            <span className="w-2 h-2 rounded-full bg-[#00D6FF] animate-ping" />
-            <span>STREAMING 8K ASSETS: {loadProgress}%</span>
-            <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-linear-to-r from-[#0050FF] to-[#00D6FF] transition-all duration-300"
-                style={{ width: `${loadProgress}%` }}
-              />
-            </div>
-          </div>
-        )}
 
         {/* CHAPTER JUMP PILL NAVIGATION (Top Center floating) */}
         <div className="absolute top-20 sm:top-22 left-1/2 -translate-x-1/2 z-30 hidden sm:flex items-center gap-1.5 p-1 rounded-full glass-panel border border-white/10 shadow-2xl backdrop-blur-xl">
@@ -383,21 +371,6 @@ export default function GtrScrollyCanvas() {
               : 'opacity-0 -translate-y-8 pointer-events-none'
           }`}
         >
-          {/* Top Title */}
-          <div className="text-center pt-16 sm:pt-20">
-            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight text-white font-['Space_Grotesk'] leading-none">
-              NISSAN <span className="text-gradient-orange">GT-R</span>
-            </h1>
-          </div>
-
-          {/* Bottom Hero Stats & Scroll Prompt */}
-          <div className="flex flex-col items-center gap-6 pb-6 pointer-events-auto">
-            {/* Scroll indicator prompt */}
-            <div className="flex items-center gap-2 text-xs font-mono tracking-wider text-white/60 animate-bounce">
-              <span>SCROLL TO DISMANTLE</span>
-              <ChevronDown className="w-4 h-4 text-[#00D6FF]" />
-            </div>
-          </div>
         </div>
 
         {/* BEAT 2: ENGINEERING REVEAL (16% - 40% scroll) */}
@@ -408,13 +381,13 @@ export default function GtrScrollyCanvas() {
               : 'opacity-0 -translate-x-12'
           }`}
         >
-          <div className="glass-panel p-5 sm:p-7 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-2xl">
+          <div className="glass-panel p-5 sm:p-7 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
             {/* Tech line indicator */}
             <div className="absolute top-0 left-0 w-1.5 h-full bg-linear-to-b from-[#00D6FF] via-[#0050FF] to-transparent" />
 
             <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-[#00D6FF] uppercase mb-2">
               <Cpu className="w-3.5 h-3.5" />
-              STRUCTURAL DISASSEMBLY • 02
+              STRUCTURAL DISASSEMBLY . 02
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
@@ -426,7 +399,7 @@ export default function GtrScrollyCanvas() {
                 A rigid chassis, hand-assembled powertrain, and optimized aerodynamics deliver track-grade performance.
               </p>
               <p>
-                Every component is tuned for balance, power, and control—lap after lap.
+                Every component is tuned for balance, power, and control-lap after lap.
               </p>
             </div>
 
@@ -460,13 +433,13 @@ export default function GtrScrollyCanvas() {
               : 'opacity-0 translate-x-12'
           }`}
         >
-          <div className="glass-panel p-5 sm:p-7 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-2xl">
+          <div className="glass-panel p-5 sm:p-7 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
             {/* Tech line indicator */}
             <div className="absolute top-0 right-0 w-1.5 h-full bg-linear-to-b from-[#FF5E00] via-[#00D6FF] to-transparent" />
 
             <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-[#FF5E00] uppercase mb-2">
               <Gauge className="w-3.5 h-3.5" />
-              PEAK EXPLODED VIEW • VR38DETT
+              PEAK EXPLODED VIEW . VR38DETT
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
@@ -489,7 +462,7 @@ export default function GtrScrollyCanvas() {
               <div className="flex items-start gap-2.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#FF5E00] mt-1.5 shrink-0 shadow-[0_0_8px_#FF5E00]" />
                 <p>
-                  Your power stays pure—boost, torque, and response arrive instantly.
+                  Your power stays pure-boost, torque, and response arrive instantly.
                 </p>
               </div>
             </div>
@@ -513,12 +486,12 @@ export default function GtrScrollyCanvas() {
               : 'opacity-0 -translate-x-12'
           }`}
         >
-          <div className="glass-panel p-5 sm:p-7 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-2xl">
+          <div className="glass-panel p-5 sm:p-7 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-linear-to-b from-[#0050FF] to-[#00D6FF]" />
 
             <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-[#00D6FF] uppercase mb-2">
               <Crosshair className="w-3.5 h-3.5" />
-              DYNAMIC VECTORING • ATTESA E-TS
+              DYNAMIC VECTORING . ATTESA E-TS
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
@@ -560,10 +533,10 @@ export default function GtrScrollyCanvas() {
               : 'opacity-0 scale-95 pointer-events-none'
           }`}
         >
-          <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-white/15 max-w-xl shadow-2xl backdrop-blur-3xl pointer-events-auto">
+          <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-white/15 max-w-xl shadow-2xl pointer-events-auto">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono tracking-widest uppercase text-[#00D6FF] mb-3">
               <ShieldCheck className="w-3.5 h-3.5 text-[#00D6FF]" />
-              REASSEMBLED • READY FOR TRACK
+              REASSEMBLED . READY FOR TRACK
             </div>
 
             <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight font-['Space_Grotesk'] leading-none">
@@ -580,44 +553,6 @@ export default function GtrScrollyCanvas() {
             </p>
           </div>
         </div>
-
-        {/* ========================================================= */}
-        {/* INTERACTIVE HOTSPOTS (Visible during exploded state)      */}
-        {/* ========================================================= */}
-        {HOTSPOTS.map((spot) => {
-          const isVisible = currentProgress >= spot.showMinProgress && currentProgress <= spot.showMaxProgress;
-          if (!isVisible) return null;
-
-          const isSelected = activeHotspot?.id === spot.id;
-
-          return (
-            <div
-              key={spot.id}
-              className="absolute z-30 transition-all duration-300"
-              style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
-            >
-              <button
-                onClick={() => setActiveHotspot(isSelected ? null : spot)}
-                aria-label={spot.title}
-                className="group relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-[#0050FF]/80 border-2 border-[#00D6FF] text-white shadow-[0_0_15px_#00D6FF] hover:scale-125 transition-transform"
-              >
-                <span className="w-2.5 h-2.5 rounded-full bg-white group-hover:bg-[#FF5E00] transition-colors" />
-                <span className="absolute inset-0 rounded-full border border-[#00D6FF] animate-ping" />
-              </button>
-
-              {/* Hotspot Glass Popup Card */}
-              {isSelected && (
-                <div className="absolute left-6 top-0 w-72 glass-panel p-4 rounded-xl border border-[#00D6FF]/40 shadow-2xl z-40 animate-fadeIn">
-                  <div className="text-[10px] font-mono text-[#00D6FF] uppercase tracking-wider mb-1">
-                    ENGINEERING SPECIFICATION
-                  </div>
-                  <h4 className="text-sm font-bold text-white mb-1.5">{spot.title}</h4>
-                  <p className="text-xs text-white/70 leading-relaxed">{spot.desc}</p>
-                </div>
-              )}
-            </div>
-          );
-        })}
       </div>
     </div>
   );

@@ -1,24 +1,45 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, VolumeX, Flame, Zap, Gauge, Play, Pause, Radio } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Flame, ShieldAlert} from 'lucide-react';
 import { gtrAudio } from '../utils/audioEngine';
 
-export default function AudioLabSection({ soundEnabled, setSoundEnabled }) {
-  const [rpm, setRpm] = useState(850);
+export default function AudioLabSection({ setSoundEnabled }) {
+  const [rpm, setRpm] = useState(0);
+  const [isEngineRunning, setIsEngineRunning] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const [isPressingThrottle, setIsPressingThrottle] = useState(false);
-  const [boostPsi, setBoostPsi] = useState(0.2);
+  const [boostPsi, setBoostPsi] = useState(0.0);
+  const [warningFlash, setWarningFlash] = useState(false);
+  
   const animRef = useRef(null);
+  const isPressingThrottleRef = useRef(false);
 
-  // Sync state with audio engine loop
+  // Subscribe to audio engine state
+  useEffect(() => {
+    const unsubscribe = gtrAudio.subscribe((state) => {
+      setIsEngineRunning(state.isEngineRunning);
+      setIsStarting(state.isStarting);
+      if (setSoundEnabled) {
+        setSoundEnabled(state.isEngineRunning || state.isStarting);
+      }
+    });
+    return unsubscribe;
+  }, [setSoundEnabled]);
+
+  // Sync RPM and boost in animation loop
   useEffect(() => {
     const updateLoop = () => {
       const currentRpm = gtrAudio.getRpm();
       setRpm(currentRpm);
 
-      // Boost calculation
-      const calculatedBoost = currentRpm < 2000 
-        ? 0.2 + (currentRpm / 2000) * 1.5 
-        : 1.7 + ((currentRpm - 2000) / 4800) * 13.5;
-      setBoostPsi(parseFloat(calculatedBoost.toFixed(1)));
+      // Boost calculation (only positive boost when revving)
+      if (currentRpm > 1800) {
+        const calculatedBoost = 0.5 + ((currentRpm - 1800) / 5000) * 14.7;
+        setBoostPsi(parseFloat(calculatedBoost.toFixed(1)));
+      } else if (currentRpm > 0) {
+        setBoostPsi(0.2);
+      } else {
+        setBoostPsi(0.0);
+      }
 
       animRef.current = requestAnimationFrame(updateLoop);
     };
@@ -27,35 +48,45 @@ export default function AudioLabSection({ soundEnabled, setSoundEnabled }) {
     return () => cancelAnimationFrame(animRef.current);
   }, []);
 
-  const handleStartRev = () => {
-    if (!soundEnabled) {
-      gtrAudio.start();
-      setSoundEnabled(true);
+  const handleStartStopClick = () => {
+    gtrAudio.toggleEngine();
+  };
+
+  const handleStartRev = (e) => {
+    if (e && e.cancelable) e.preventDefault();
+    if (!isEngineRunning) {
+      setWarningFlash(true);
+      setTimeout(() => setWarningFlash(false), 1200);
+      return;
     }
+    if (isPressingThrottleRef.current) return;
+    isPressingThrottleRef.current = true;
     setIsPressingThrottle(true);
     gtrAudio.throttleDown();
   };
 
-  const handleStopRev = () => {
+  const handleStopRev = (e) => {
+    if (e && e.cancelable) e.preventDefault();
+    if (!isPressingThrottleRef.current) return;
+    isPressingThrottleRef.current = false;
     setIsPressingThrottle(false);
     gtrAudio.throttleUp();
-  };
-
-  const toggleMasterSound = () => {
-    if (soundEnabled) {
-      gtrAudio.stop();
-      setSoundEnabled(false);
-    } else {
-      gtrAudio.start();
-      setSoundEnabled(true);
-    }
   };
 
   // Tachometer needle angle: 0 RPM = -120deg, 7500 RPM = +120deg
   const needleAngle = -120 + (rpm / 7500) * 240;
 
   return (
-    <section id="audio-section" className="relative py-28 px-4 sm:px-6 lg:px-8 bg-[#050505] text-white">
+    <section
+      id="audio-section"
+      className="relative -mt-0.5 py-28 px-4 sm:px-6 lg:px-8 bg-[#050505] text-white"
+      style={{
+        backgroundImage: "linear-gradient(rgba(5, 5, 5, 0.38), rgba(5, 5, 5, 0.62)), url('/Neon%20Sunset%20Boulevard%20by%20the%20Bay.png')",
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center 35%',
+      }}
+    >
       {/* Background Lighting */}
       <div className="absolute inset-0 tech-grid opacity-20 pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-[#FF5E00]/10 blur-[180px] pointer-events-none" />
@@ -68,19 +99,27 @@ export default function AudioLabSection({ soundEnabled, setSoundEnabled }) {
             <span className="text-gradient-orange">Pure Combustion.</span>
           </h2>
           <p className="mt-4 text-sm sm:text-base text-white/60 leading-relaxed font-light">
-            Interactive real-time audio synthesizer reproducing the twin-turbo whistle, combustion resonance, and titanium quad exhaust pulse of the GT-R VR38DETT.
+            Push the engine start button to hear the starter crank and 3.8L twin-turbo V6 catch fire, or hold the throttle to spool up the boost.
           </p>
         </div>
 
         {/* Cockpit Gauge Cluster & Throttle Console */}
-        <div className="glass-panel p-8 sm:p-12 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-2xl">
+        <div className="glass-panel p-6 sm:p-12 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-2xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             {/* Tachometer Instrument Gauge */}
-            <div className="lg:col-span-7 flex flex-col items-center justify-center p-4">
-              <div className="relative w-72 h-72 sm:w-80 sm:h-80 rounded-full bg-black/80 border-4 border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex items-center justify-center">
+            <div className="lg:col-span-7 flex flex-col items-center justify-center p-2 sm:p-4">
+              <div className={`relative w-72 h-72 sm:w-80 sm:h-80 rounded-full bg-black/80 border-4 border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex items-center justify-center transition-transform ${
+                isStarting 
+                  ? 'engine-vibrate-startup' 
+                  : isPressingThrottle 
+                  ? 'engine-vibrate-rev' 
+                  : (isEngineRunning ? 'engine-vibrate-idle' : '')
+              }`}>
                 {/* Radial Glow */}
-                <div className={`absolute inset-4 rounded-full transition-opacity duration-300 ${isPressingThrottle ? 'bg-[#FF5E00]/15' : 'bg-transparent'}`} />
+                <div className={`absolute inset-4 rounded-full transition-opacity duration-300 ${
+                  isPressingThrottle ? 'bg-[#FF5E00]/20' : (isEngineRunning ? 'bg-[#00D6FF]/5' : 'bg-transparent')
+                }`} />
 
                 {/* Gauge Ring */}
                 <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 200 200">
@@ -124,7 +163,7 @@ export default function AudioLabSection({ soundEnabled, setSoundEnabled }) {
                         left: `${(x / 200) * 100}%`,
                         top: `${(y / 200) * 100}%`,
                         transform: 'translate(-50%, -50%)',
-                        color: num >= 7 ? '#FF2200' : 'rgba(255,255,255,0.6)',
+                        color: num >= 7 ? '#FF2200' : (isEngineRunning ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)'),
                       }}
                     >
                       {num}
@@ -147,7 +186,9 @@ export default function AudioLabSection({ soundEnabled, setSoundEnabled }) {
                   <div className="text-2xl font-black font-mono text-white tracking-tight">
                     {rpm}
                   </div>
-                  <span className="text-[9px] font-mono text-white/40">x1000 r/min</span>
+                  <span className="text-[9px] font-mono text-white/40">
+                    {isEngineRunning ? 'IDLE: 850' : 'OFF: 0'}
+                  </span>
                 </div>
               </div>
 
@@ -159,83 +200,107 @@ export default function AudioLabSection({ soundEnabled, setSoundEnabled }) {
                 </div>
                 <div className="h-6 w-px bg-white/10" />
                 <div className="text-center">
-                  <div className="text-white/40 text-[10px]">GEAR</div>
-                  <div className="font-bold text-white">N</div>
+                  <div className="text-white/40 text-[10px]">IGNITION</div>
+                  <div className={`font-bold ${isEngineRunning ? 'text-green-400' : isStarting ? 'text-amber-400' : 'text-white/40'}`}>
+                    {isStarting ? 'CRANKING' : (isEngineRunning ? 'ON' : 'OFF')}
+                  </div>
                 </div>
                 <div className="h-6 w-px bg-white/10" />
                 <div className="text-center">
-                  <div className="text-white/40 text-[10px]">OIL TEMP</div>
-                  <div className="font-bold text-[#FFA048]">92°C</div>
+                  <div className="text-white/40 text-[10px]">STATUS</div>
+                  <div className="font-bold text-[#FFA048]">
+                    {isEngineRunning ? 'READY' : 'STANDBY'}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Right Controls & Interactive Rev Pedal */}
+            {/* Right Controls: Start/Stop Button & Rev Pedal */}
             <div className="lg:col-span-5 flex flex-col items-center justify-center space-y-6 text-center">
               <div>
                 <span className="text-xs font-mono text-[#00D6FF] tracking-wider uppercase">
-                  INTERACTIVE THROTTLE ACTUATOR
+                  NISSAN GT-R COCKPIT CONTROLS
                 </span>
                 <h3 className="text-xl sm:text-2xl font-bold text-white mt-1">
-                  Experience the Twin-Turbo Spool
+                  Engine Ignition & Throttle
                 </h3>
-                <p className="text-xs sm:text-sm text-white/60 mt-2 font-light">
-                  Press and hold the throttle to spin the turbos and open the exhaust bypass. Release to hear the blow-off valve divert compressed air.
-                </p>
               </div>
+
+              {/* AUTHENTIC GT-R RED ALUMINUM START/STOP BUTTON */}
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={handleStartStopClick}
+                  className={`relative group flex flex-col items-center justify-center w-28 h-28 rounded-full border-4 transition-all duration-300 shadow-2xl active:scale-95 ${
+                    isEngineRunning
+                      ? 'bg-linear-to-b from-[#e01a00] to-[#800b00] border-[#ff4d36] shadow-[0_0_35px_rgba(255,50,20,0.7)] scale-102'
+                      : isStarting
+                      ? 'bg-linear-to-b from-[#ff8c00] to-[#b35900] border-[#ffa64d] shadow-[0_0_30px_rgba(255,140,0,0.6)] animate-pulse'
+                      : 'bg-linear-to-b from-[#2a2c35] to-[#121318] border-white/20 hover:border-red-500/80 shadow-[0_0_20px_rgba(0,0,0,0.8)] hover:scale-105'
+                  }`}
+                  title={isEngineRunning ? "Click to Stop Engine" : "Click to Start Engine"}
+                >
+                  {/* Metallic Bevel Ring */}
+                  <div className="absolute inset-1 rounded-full border border-white/15 pointer-events-none" />
+                  
+                  {/* Status Indicator LED */}
+                  <div className={`w-2 h-2 rounded-full mb-1 transition-colors duration-300 ${
+                    isEngineRunning ? 'bg-[#00ff88] shadow-[0_0_8px_#00ff88]' :
+                    isStarting ? 'bg-[#ffaa00] animate-ping' :
+                    'bg-red-500/40'
+                  }`} />
+
+                  <span className="text-[9px] font-mono font-bold tracking-widest text-white/70 uppercase">
+                    ENGINE
+                  </span>
+                  <span className="text-xs font-black font-mono tracking-tight text-white uppercase">
+                    {isStarting ? 'CRANKING' : (isEngineRunning ? 'STOP' : 'START')}
+                  </span>
+                </button>
+              </div>
+
+              {/* Warning if trying to rev while engine is off */}
+              {warningFlash && (
+                <div className="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono flex items-center gap-2 animate-bounce">
+                  <ShieldAlert className="w-4 h-4 text-red-400" />
+                  <span>Start the engine first using the START button!</span>
+                </div>
+              )}
 
               {/* The Throttle Pedal Button */}
               <div className="w-full max-w-xs">
                 <button
-                  onMouseDown={handleStartRev}
-                  onMouseUp={handleStopRev}
-                  onMouseLeave={handleStopRev}
-                  onTouchStart={(e) => {
-                    e.preventDefault();
-                    handleStartRev();
+                  onPointerDown={(e) => {
+                    try { e.currentTarget.setPointerCapture?.(e.pointerId); } catch {}
+                    handleStartRev(e);
                   }}
-                  onTouchEnd={(e) => {
-                    e.preventDefault();
-                    handleStopRev();
+                  onPointerUp={(e) => {
+                    handleStopRev(e);
                   }}
-                  className={`w-full py-6 px-8 rounded-2xl font-black font-mono text-base tracking-wider uppercase transition-all duration-200 select-none shadow-2xl relative overflow-hidden ${
-                    isPressingThrottle
+                  onPointerCancel={(e) => {
+                    handleStopRev(e);
+                  }}
+                  className={`w-full py-5 px-6 rounded-2xl font-black font-mono text-sm tracking-wider uppercase transition-all duration-200 select-none shadow-2xl relative overflow-hidden touch-none ${
+                    !isEngineRunning
+                      ? 'bg-white/4 border border-white/10 text-white/40 hover:border-red-500/50 hover:text-white/70'
+                      : isPressingThrottle
                       ? 'bg-linear-to-r from-[#FF2200] to-[#FF5E00] text-white scale-95 shadow-[0_0_40px_rgba(255,94,0,0.6)]'
                       : 'bg-linear-to-r from-[#0050FF] to-[#00D6FF] text-white hover:scale-[1.02] shadow-[0_0_25px_rgba(0,214,255,0.3)]'
                   }`}
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
-                    <Flame className={`w-5 h-5 ${isPressingThrottle ? 'animate-bounce' : ''}`} />
-                    {isPressingThrottle ? 'THROTTLE WIDE OPEN!' : 'HOLD TO REV (WOT)'}
+                    <Flame className={`w-4 h-4 ${isPressingThrottle ? 'animate-bounce text-white' : (isEngineRunning ? 'text-[#FF5E00]' : 'text-white/20')}`} />
+                    {!isEngineRunning 
+                      ? 'ENGINE OFF (START FIRST)' 
+                      : (isPressingThrottle ? 'THROTTLE WIDE OPEN!' : 'HOLD TO REV (WOT)')}
                   </span>
                 </button>
                 <div className="text-[10px] font-mono text-white/40 mt-2">
-                  (PRESS & HOLD TO ACCELERATE • RELEASE FOR BLOW-OFF)
+                  {isEngineRunning 
+                    ? '(HOLD TO BUILD BOOST >3,800 RPM . RELEASE FOR BLOW-OFF)' 
+                    : '(START THE ENGINE ABOVE TO UNLOCK THROTTLE)'}
                 </div>
               </div>
-
-              {/* Sound Toggle */}
-              <div className="pt-2 flex items-center justify-center gap-3">
-                <button
-                  onClick={toggleMasterSound}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-white/10 text-xs font-medium text-white/80 hover:text-white hover:border-[#00D6FF]/40 transition-colors"
-                >
-                  {soundEnabled ? (
-                    <>
-                      <Volume2 className="w-4 h-4 text-[#00D6FF]" />
-                      <span>Audio Active (Click to Mute)</span>
-                    </>
-                  ) : (
-                    <>
-                      <VolumeX className="w-4 h-4 text-white/40" />
-                      <span>Audio Muted (Click to Enable)</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
             </div>
-
           </div>
         </div>
       </div>

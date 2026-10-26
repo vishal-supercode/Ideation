@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Sparkles, Check, ChevronRight, Shield, Award, Car } from 'lucide-react';
+import { useState } from 'react';
+import { Check, ChevronRight, Car } from 'lucide-react';
 
 const COLORS = [
   {
@@ -145,7 +145,7 @@ export default function ConfiguratorSection() {
                   NISSAN GT-R
                 </div>
                 <div className="text-sm font-semibold tracking-wide text-white/80">
-                  {selectedTrim.name} • {selectedColor.name}
+                  {selectedTrim.name} . {selectedColor.name}
                 </div>
                 <div className="text-xs font-mono text-[#00D6FF]">
                   {selectedWheel.name}
@@ -157,7 +157,7 @@ export default function ConfiguratorSection() {
                 PAINT CODE: {selectedColor.id.toUpperCase()}
               </div>
               <div className="absolute top-4 right-4 text-[10px] font-mono text-white/40">
-                565–600 HP ALLOCATION
+                565-600 HP ALLOCATION
               </div>
               <div className="absolute bottom-4 left-4 text-[10px] font-mono text-white/40">
                 TAKUMI CERTIFIED

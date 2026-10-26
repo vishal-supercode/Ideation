@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Gauge, Flame, Zap, Compass, RotateCw } from 'lucide-react';
+import { useState } from 'react';
+import { Gauge, Flame, Zap, RotateCw } from 'lucide-react';
 
 export default function PowertrainSection() {
   const [sliderRpm, setSliderRpm] = useState(6800);

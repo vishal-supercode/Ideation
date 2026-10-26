@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Cpu, Shield, Wind, Disc, Award, ChevronRight, Check } from 'lucide-react';
+import { useState } from 'react';
+import { Cpu, Shield, Wind, Award, Check } from 'lucide-react';
 
 const ENGINEERING_MODULES = [
   {
@@ -8,7 +8,7 @@ const ENGINEERING_MODULES = [
     category: 'POWERTRAIN',
     title: 'Takumi Handcrafted Assembly',
     subtitle: 'One Man, One Engine. Dust-free ISO Cleanroom Build.',
-    summary: 'Only five master craftsmen—known in Japan as Takumi—are sanctioned to hand-assemble the VR38DETT engine. Each engine bears an aluminum plaque signed by its builder.',
+    summary: 'Only five master craftsmen-known in Japan as Takumi-are sanctioned to hand-assemble the VR38DETT engine. Each engine bears an aluminum plaque signed by its builder.',
     stats: [
       { label: 'Takumi Masters', value: '5 Worldwide' },
       { label: 'Assembly Room', value: 'ISO Class 5' },

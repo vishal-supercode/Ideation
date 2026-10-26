@@ -1,31 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X, Volume2, VolumeX } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Menu, X, Volume2, VolumeX, Power } from 'lucide-react';
 import { gtrAudio } from '../utils/audioEngine';
 
-export default function Navbar({ onNavigate, soundEnabled, setSoundEnabled }) {
+export default function Navbar({ onNavigate, setSoundEnabled }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [engineActive, setEngineActive] = useState(false);
+  const [introActive, setIntroActive] = useState(true);
+  const [navVisible, setNavVisible] = useState(true);
+  const previousScrollYRef = useRef(0);
+  const introWasActiveRef = useRef(true);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 40) {
-        setScrolled(true);
+    const updateScrollState = () => {
+      const currentY = window.scrollY;
+      const intro = document.getElementById('katsura-intro');
+      const rect = intro?.getBoundingClientRect();
+      const isIntroActive = rect ? rect.bottom > 0 && rect.top < window.innerHeight : false;
+      const introJustEnded = introWasActiveRef.current && !isIntroActive;
+
+      setScrolled(currentY > 40);
+      setIntroActive(isIntroActive);
+
+      if (isIntroActive) {
+        setNavVisible(false);
+      } else if (introJustEnded) {
+        setNavVisible(true);
       } else {
-        setScrolled(false);
+        const delta = currentY - previousScrollYRef.current;
+        if (Math.abs(delta) > 4) setNavVisible(delta < 0);
       }
+
+      introWasActiveRef.current = isIntroActive;
+      previousScrollYRef.current = currentY;
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    updateScrollState();
+    window.addEventListener('scroll', updateScrollState, { passive: true });
+    window.addEventListener('resize', updateScrollState);
+    return () => {
+      window.removeEventListener('scroll', updateScrollState);
+      window.removeEventListener('resize', updateScrollState);
+    };
   }, []);
 
+  useEffect(() => {
+    return gtrAudio.subscribe((state) => {
+      const active = state.isEngineRunning || state.isStarting;
+      setEngineActive(active);
+      if (setSoundEnabled) setSoundEnabled(active);
+    });
+  }, [setSoundEnabled]);
+
   const toggleSound = () => {
-    if (soundEnabled) {
-      gtrAudio.stop();
-      setSoundEnabled(false);
-    } else {
-      gtrAudio.start();
-      setSoundEnabled(true);
-    }
+    gtrAudio.toggleEngine();
   };
 
   const navLinks = [
@@ -45,7 +72,7 @@ export default function Navbar({ onNavigate, soundEnabled, setSoundEnabled }) {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${introActive || !navVisible ? 'pointer-events-none -translate-y-full opacity-0' : 'translate-y-0 opacity-100'} ${
         scrolled
           ? 'bg-[#050505]/80 backdrop-blur-md border-b border-white/8 shadow-2xl py-3.5'
           : 'bg-transparent border-b border-transparent py-5'
@@ -86,18 +113,33 @@ export default function Navbar({ onNavigate, soundEnabled, setSoundEnabled }) {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
-          {/* Engine Sound Toggle */}
+          {/* Quick Engine Ignition Button in Navbar */}
           <button
             onClick={toggleSound}
-            aria-label={soundEnabled ? "Mute engine sound" : "Enable engine sound"}
-            title={soundEnabled ? "Engine Audio Active" : "Unmute VR38DETT Engine Sound"}
+            aria-label={engineActive ? "Stop Engine" : "Start Engine"}
+            title={engineActive ? "Click to Stop Engine" : "Click to Start VR38 Engine"}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-bold transition-all duration-300 border ${
+              engineActive
+                ? 'bg-red-600/20 border-red-500/60 text-red-400 shadow-[0_0_12px_rgba(255,40,20,0.4)]'
+                : 'bg-white/4 border-white/10 text-white/60 hover:text-white hover:bg-white/8'
+            }`}
+          >
+            <Power className={`w-3.5 h-3.5 ${engineActive ? 'text-red-400' : 'text-white/50'}`} />
+            <span className="hidden sm:inline">{engineActive ? 'ENGINE ON' : 'START'}</span>
+          </button>
+
+          {/* Engine Sound Toggle Icon */}
+          <button
+            onClick={toggleSound}
+            aria-label={engineActive ? "Mute engine sound" : "Enable engine sound"}
+            title={engineActive ? "Engine Audio Active" : "Start VR38 Engine"}
             className={`p-2 rounded-full transition-all duration-300 border ${
-              soundEnabled
+              engineActive
                 ? 'bg-[#FF5E00]/15 border-[#FF5E00]/50 text-[#FFA048] shadow-[0_0_15px_rgba(255,94,0,0.35)]'
                 : 'bg-white/4 border-white/10 text-white/50 hover:text-white/90 hover:bg-white/8'
             }`}
           >
-            {soundEnabled ? (
+            {engineActive ? (
               <Volume2 className="w-4 h-4 animate-pulse" />
             ) : (
               <VolumeX className="w-4 h-4" />
@@ -127,6 +169,19 @@ export default function Navbar({ onNavigate, soundEnabled, setSoundEnabled }) {
               {link.label}
             </button>
           ))}
+          <div className="pt-2">
+            <button
+              onClick={toggleSound}
+              className={`w-full py-2.5 rounded-xl text-xs font-semibold font-mono flex items-center justify-center gap-2 border ${
+                engineActive
+                  ? 'bg-red-600/30 border-red-500 text-red-300'
+                  : 'bg-white/8 border-white/20 text-white'
+              }`}
+            >
+              <Power className="w-3.5 h-3.5" />
+              <span>{engineActive ? 'STOP ENGINE (RUNNING)' : 'START ENGINE'}</span>
+            </button>
+          </div>
         </div>
       )}
     </header>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Table, Check, Download, Layers, ShieldCheck, Zap } from 'lucide-react';
+import { useState } from 'react';
+import { Table, Download, ShieldCheck } from 'lucide-react';
 
 const SPECS_DATA = [
   {
@@ -7,8 +7,8 @@ const SPECS_DATA = [
     items: [
       { name: 'Engine Type', premium: 'VR38DETT 3.8L Twin-Turbo 24V V6', nismo: 'VR38DETT with GT3-Spec Turbos' },
       { name: 'Horsepower', premium: '565 HP @ 6,800 RPM', nismo: '600 HP @ 6,800 RPM' },
-      { name: 'Torque', premium: '467 lb-ft @ 3,300–5,800 RPM', nismo: '481 lb-ft @ 3,600–5,600 RPM' },
-      { name: '0–60 MPH', premium: '2.7 Seconds', nismo: '2.5 Seconds' },
+      { name: 'Torque', premium: '467 lb-ft @ 3,300-5,800 RPM', nismo: '481 lb-ft @ 3,600-5,600 RPM' },
+      { name: '0-60 MPH', premium: '2.7 Seconds', nismo: '2.5 Seconds' },
       { name: 'Top Speed', premium: '205 MPH (330 km/h)', nismo: '205 MPH (Track Calibrated)' },
       { name: 'Turbine Configuration', premium: 'Parallel Twin IHI Turbochargers', nismo: 'NISMO GT3 Competition 10-Vane Turbos' },
       { name: 'Bore & Stroke', premium: '95.5 mm x 88.4 mm', nismo: '95.5 mm x 88.4 mm' },
@@ -132,7 +132,8 @@ export default function SpecsSection() {
           <div className="p-4 sm:p-6 bg-white/2 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-white/50">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#00D6FF]" />
-              <span>OFFICIAL FACTORY BENCH DATA • NISSAN MOTOR CO., LTD.</span>
+              <span>OFFICIAL FACTORY BENCH DATA . NISSAN MOTOR CO., LTD.
+              </span>
             </div>
             <button
               onClick={handlePrint}

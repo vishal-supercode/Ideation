@@ -36,19 +36,24 @@
   background: #0050ff88;
 }
 
-/* Glassmorphism helpers */
+/* Glassmorphism helpers - Optimized for crisp text rendering during fast scroll */
 .glass-panel {
-  background: rgba(10, 10, 14, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 14, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transform: translateZ(0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .glass-pill {
-  background: rgba(15, 17, 23, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 17, 23, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transform: translateZ(0);
 }
 
 /* Tech Grid Background */
@@ -96,4 +101,54 @@
 }
 .animate-hud-pulse {
   animation: hudPulse 2.5s infinite ease-in-out;
+}
+
+/* ======================================================== */
+/* SUBTLE ENGINE CHASSIS VIBRATION ANIMATIONS               */
+/* ======================================================== */
+
+/* 1. Startup Crank & Ignition Catch Vibration (approx 1.2px) */
+@keyframes engineStartupRumble {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-0.8px, 0.6px); }
+  20% { transform: translate(0.9px, -0.7px); }
+  30% { transform: translate(-1.2px, -0.4px); }
+  40% { transform: translate(1.0px, 0.8px); }
+  50% { transform: translate(-0.7px, 1.1px); }
+  60% { transform: translate(1.1px, -0.6px); }
+  70% { transform: translate(-0.9px, -0.8px); }
+  80% { transform: translate(0.8px, 0.5px); }
+  90% { transform: translate(-0.5px, 0.3px); }
+  100% { transform: translate(0, 0); }
+}
+
+.engine-vibrate-startup {
+  animation: engineStartupRumble 0.12s infinite linear;
+}
+
+/* 2. Micro Idle Vibration (gentle 0.3px mechanical purr) */
+@keyframes engineIdlePurr {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-0.35px, 0.25px); }
+  50% { transform: translate(0.3px, -0.2px); }
+  75% { transform: translate(-0.25px, -0.3px); }
+  100% { transform: translate(0, 0); }
+}
+
+.engine-vibrate-idle {
+  animation: engineIdlePurr 0.09s infinite linear;
+}
+
+/* 3. High-RPM Throttle Rev Vibration (approx 0.8px) */
+@keyframes engineRevRumble {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-0.9px, 0.6px); }
+  40% { transform: translate(0.8px, -0.8px); }
+  60% { transform: translate(-0.7px, -0.6px); }
+  80% { transform: translate(0.9px, 0.7px); }
+  100% { transform: translate(0, 0); }
+}
+
+.engine-vibrate-rev {
+  animation: engineRevRumble 0.06s infinite linear;
 }
